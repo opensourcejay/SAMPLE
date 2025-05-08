@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 import { ChatView } from './components/ChatView';
-import { WorkInProgress } from './components/WorkInProgress';
+import { ImageGenerationView } from './components/ImageGenerationView';
+import { AvatarView } from './components/AvatarView';
+import { VoiceView } from './components/VoiceView';
+import { SearchView } from './components/SearchView';
 import { Sidebar } from './components/Sidebar';
 import { SettingsModal } from './components/SettingsModal';
 
@@ -19,7 +22,8 @@ function App() {
     { name: "Chat", icon: "💬" },
     { name: "Image Generation", icon: "🎨" },
     { name: "Avatar", icon: "👤" },
-    { name: "Voice", icon: "🎙️" }
+    { name: "Voice", icon: "🎙️" },
+    { name: "Search", icon: "🔍" }
   ];
   
   const [apiSettings, setApiSettings] = useState(() => {
@@ -41,9 +45,15 @@ function App() {
         apiKey: '',
         endpoint: '',
         model: '',
-        apiVersion: '2024-12-01-preview'
+        apiVersion: '2024-12-01-preview' // Standard Azure OpenAI API version
       },
       'Voice': {
+        apiKey: '',
+        endpoint: '',
+        model: '',
+        apiVersion: '2024-12-01-preview'
+      },
+      'Search': {
         apiKey: '',
         endpoint: '',
         model: '',
@@ -78,7 +88,7 @@ function App() {
         apiKey: '',
         endpoint: '',
         model: '',
-        apiVersion: '2024-12-01-preview'
+        apiVersion: section === 'Avatar' ? '2024-12-01-preview' : '2024-12-01-preview'
       }
     }));
   };
@@ -90,7 +100,7 @@ function App() {
         apiKey: '',
         endpoint: '',
         model: '',
-        apiVersion: '2024-12-01-preview'
+        apiVersion: section === 'Avatar' ? '2024-12-01-preview' : '2024-12-01-preview'
       }
     }), {});
     setApiSettings(clearedSettings);
@@ -116,9 +126,41 @@ function App() {
           />
         );
       case 'Image Generation':
+        return (
+          <ImageGenerationView 
+            apiKey={currentSettings.apiKey} 
+            endpoint={currentSettings.endpoint} 
+            model={currentSettings.model} 
+            apiVersion={currentSettings.apiVersion}
+          />
+        );
       case 'Avatar':
+        return (
+          <AvatarView 
+            apiKey={currentSettings.apiKey} 
+            endpoint={currentSettings.endpoint} 
+            model={currentSettings.model} 
+            apiVersion={currentSettings.apiVersion}
+          />
+        );
       case 'Voice':
-        return <WorkInProgress feature={activeSection} />;
+        return (
+          <VoiceView 
+            apiKey={currentSettings.apiKey} 
+            endpoint={currentSettings.endpoint} 
+            model={currentSettings.model} 
+            apiVersion={currentSettings.apiVersion}
+          />
+        );
+      case 'Search':
+        return (
+          <SearchView 
+            apiKey={currentSettings.apiKey} 
+            endpoint={currentSettings.endpoint} 
+            model={currentSettings.model} 
+            apiVersion={currentSettings.apiVersion}
+          />
+        );
       default:
         return <ChatView 
           apiKey={currentSettings.apiKey} 

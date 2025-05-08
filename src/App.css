@@ -453,6 +453,8 @@
   border: none;
   padding: 0.5rem;
   font-size: 1rem;
+  background-color: white;
+  color: #333;
 }
 
 .chat-input-container input:focus {
@@ -493,6 +495,11 @@
   padding: 4px 8px;
   border-radius: 4px;
   transition: background-color 0.2s;
+  color: #555;
+}
+
+.dark-mode .chat-input-buttons button {
+  color: #ddd;
 }
 
 .chat-input-buttons button:hover {
@@ -542,6 +549,13 @@
   flex-direction: column;
   gap: 4px;
   z-index: 1000;
+  color: #333; /* Adding default text color for light mode */
+}
+
+.dark-mode .options-menu {
+  background-color: #363636;
+  border-color: #4a4a4a;
+  color: #ffffff; /* Ensuring text is visible in dark mode */
 }
 
 .options-menu button {
@@ -552,10 +566,15 @@
   cursor: pointer;
   border-radius: 4px;
   transition: background-color 0.2s;
+  color: inherit; /* Using the inherited color from parent */
 }
 
 .options-menu button:hover {
   background-color: #f0f0f0;
+}
+
+.dark-mode .options-menu button:hover {
+  background-color: #444;
 }
 
 .settings-modal {
@@ -730,12 +749,29 @@
   padding: 0.5rem;
   border: 1px solid #bdc3c7;
   border-radius: 4px;
+  background-color: #ffffff;
 }
 
 .dark-mode .api-form input {
   background-color: #363636;
   border-color: #4a4a4a;
   color: #ffffff;
+}
+
+.api-form-info {
+  margin-top: 0.5rem;
+  padding: 0.8rem;
+  background-color: rgba(26, 188, 156, 0.1);
+  border-left: 3px solid #1abc9c;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #2c3e50;
+}
+
+.dark-mode .api-form-info {
+  background-color: rgba(46, 204, 113, 0.1);
+  border-left-color: #2ecc71;
+  color: #e0e0e0;
 }
 
 .settings-container {
@@ -1051,4 +1087,305 @@
 
 .dark-mode .retry-button:hover {
   background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Component-specific styles */
+
+/* Image Generation View */
+.generated-images-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px 0;
+  justify-content: center;
+}
+
+.generated-image {
+  max-width: 300px;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.generated-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.image-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.image-options label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.image-options select {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background-color: white;
+}
+
+.dark-mode .image-options select {
+  background-color: #363636;
+  border-color: #4a4a4a;
+  color: #ffffff;
+}
+
+/* Avatar View */
+.avatar-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  text-align: center;
+}
+
+.avatar-image-container {
+  max-width: 300px;
+  margin: 20px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.avatar-image-container img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.avatar-description {
+  max-width: 500px;
+  margin-top: 10px;
+  font-style: italic;
+  color: #666;
+}
+
+.dark-mode .avatar-description {
+  color: #a0a0a0;
+}
+
+.avatar-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.avatar-name-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: white;
+  color: #333;
+}
+
+.dark-mode .avatar-name-input {
+  background-color: #363636;
+  border-color: #4a4a4a;
+  color: #ffffff;
+}
+
+.avatar-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.avatar-options label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.avatar-options select {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background-color: white;
+}
+
+.dark-mode .avatar-options select {
+  background-color: #363636;
+  border-color: #4a4a4a;
+  color: #ffffff;
+}
+
+/* Voice View */
+.voice-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.voice-text-display {
+  width: 100%;
+  max-width: 600px;
+  margin: 20px auto;
+  text-align: center;
+}
+
+.voice-text {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: #2c3e50;
+}
+
+.dark-mode .voice-text {
+  background-color: #363636;
+  color: #ffffff;
+}
+
+.audio-player {
+  margin: 20px 0;
+  width: 100%;
+}
+
+.audio-player audio {
+  width: 100%;
+}
+
+.voice-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.voice-options label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #333; /* Making sure the label text is visible in light mode */
+}
+
+.dark-mode .voice-options label {
+  color: #fff; /* Ensuring text is visible in dark mode */
+}
+
+.voice-options select {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background-color: white;
+  color: #333; /* Ensuring text in dropdown is visible */
+}
+
+.dark-mode .voice-options select {
+  background-color: #363636;
+  border-color: #4a4a4a;
+  color: #ffffff;
+}
+
+/* Search View */
+.search-content {
+  padding: 20px;
+}
+
+.search-results {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.search-results h3 {
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+  color: #2c3e50;
+}
+
+.dark-mode .search-results h3 {
+  color: #ffffff;
+}
+
+.search-results-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.search-result-item {
+  padding: 12px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.dark-mode .search-result-item {
+  border-bottom-color: #4a4a4a;
+}
+
+.search-result-title {
+  color: #1a73e8;
+  text-decoration: none;
+  font-size: 1.1rem;
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.search-result-title:hover {
+  text-decoration: underline;
+}
+
+.search-result-url {
+  color: #0d652d;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.dark-mode .search-result-url {
+  color: #34a853;
+}
+
+.search-result-snippet {
+  color: #5f6368;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.dark-mode .search-result-snippet {
+  color: #bdc1c6;
+}
+
+.search-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.search-options label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.search-options select {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background-color: white;
+}
+
+.dark-mode .search-options select {
+  background-color: #363636;
+  border-color: #4a4a4a;
+  color: #ffffff;
 }
