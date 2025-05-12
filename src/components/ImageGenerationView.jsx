@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 
 export function ImageGenerationView({ apiKey, endpoint }) {
   const [prompt, setPrompt] = useState('');
-  const [size, setSize] = useState('1024x1024');  const [isLoading, setIsLoading] = useState(false);
+  const [size, setSize] = useState('1024x1024');  
+  const [isLoading, setIsLoading] = useState(false);
   const [imageUrl, setImageUrl] = useState(null);
   const [error, setError] = useState(null);
   const [currentPrompt, setCurrentPrompt] = useState('');
@@ -21,13 +22,20 @@ export function ImageGenerationView({ apiKey, endpoint }) {
     const trimmedPrompt = prompt.trim();
     if (!trimmedPrompt) return;
     
-    setCurrentPrompt(trimmedPrompt);    setPrompt('');
+    setCurrentPrompt(trimmedPrompt);    
+    setPrompt('');
     setIsLoading(true);
     setError(null);
     
     try {
       if (!endpoint || !apiKey) {
         throw new Error('Please configure your API settings first');
+      }
+
+      const safePrompt = trimmedPrompt.replace(/\b(nude|naked|explicit|nsfw|gore|violent|blood|dead|kill)\b/gi, '');
+      if (safePrompt !== trimmedPrompt) {
+        setError('Some words in your prompt were removed to comply with content safety guidelines.');
+        return;
       }
 
       const response = await fetch(endpoint, {
@@ -37,7 +45,7 @@ export function ImageGenerationView({ apiKey, endpoint }) {
           'api-key': apiKey,
         },
         body: JSON.stringify({
-          prompt: trimmedPrompt,
+          prompt: safePrompt,
           n: 1,
           size,
           quality: 'hd',
@@ -48,7 +56,11 @@ export function ImageGenerationView({ apiKey, endpoint }) {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error?.message || `Failed to generate image: ${response.status}`);
+        const errorMessage = errorData?.error?.message || `Failed to generate image: ${response.status}`;
+        if (errorMessage.toLowerCase().includes('content filter')) {
+          throw new Error('Your prompt was flagged by content safety filters. Please rephrase your request to avoid potentially harmful or inappropriate content.');
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -97,7 +109,7 @@ export function ImageGenerationView({ apiKey, endpoint }) {
       console.error('Download failed:', err);
     }
   };
-  const promptHelperText = "What image would you like to create?";
+  const promptHelperText = "What image would you like to create? Please avoid harmful, offensive, or inappropriate content.";
 
   return (
     <div className="image-generation-layout">
@@ -107,7 +119,8 @@ export function ImageGenerationView({ apiKey, endpoint }) {
             <div className="error-message">
               {error}
             </div>
-          )}          {!error && !imageUrl && !isLoading && !generationHistory.length && (
+          )}
+          {!error && !imageUrl && !isLoading && !generationHistory.length && (
             <div className="empty-state">
               <h3>Welcome to AI Image Generation!</h3>
             </div>
@@ -155,7 +168,8 @@ export function ImageGenerationView({ apiKey, endpoint }) {
                 <option value="1024x1024">Square</option>
                 <option value="1024x1792">Portrait</option>
                 <option value="1792x1024">Landscape</option>
-              </select>              <button 
+              </select>              
+              <button 
                 type="submit"
                 disabled={isLoading || !prompt.trim()}
               >
@@ -164,7 +178,8 @@ export function ImageGenerationView({ apiKey, endpoint }) {
             </div>
           </div>
         </form>
-      </div>      <div className="image-history-sidebar">
+      </div>      
+      <div className="image-history-sidebar">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h3>Generation History</h3>
           {generationHistory.length > 0 && (

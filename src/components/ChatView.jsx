@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export function ChatView({ apiKey, endpoint, model, apiVersion = '2024-02-15-preview' }) {
+export function ChatView({ apiKey, endpoint, model, apiVersion = '2024-03-01-preview' }) {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -19,6 +19,12 @@ export function ChatView({ apiKey, endpoint, model, apiVersion = '2024-02-15-pre
   useEffect(() => {
     localStorage.setItem('customPrompt', customPrompt);
   }, [customPrompt]);
+
+  const handleSavePrompt = () => {
+    setCustomPrompt(editingPrompt);
+    setShowPromptEditor(false);
+    setEditingPrompt('');
+  };
 
   const validateSettings = () => {
     if (!apiKey?.trim()) {
@@ -39,7 +45,13 @@ export function ChatView({ apiKey, endpoint, model, apiVersion = '2024-02-15-pre
   };
 
   const getCleanEndpoint = () => {
-    return endpoint?.trim()?.replace(/\/openai\/.*$/, '')?.replace(/\/$/, '');
+    let cleanEndpoint = endpoint?.trim() || '';
+    // Remove any trailing /openai/ or /deployments/ paths
+    cleanEndpoint = cleanEndpoint.replace(/\/openai\/.*$/, '');
+    cleanEndpoint = cleanEndpoint.replace(/\/deployments\/.*$/, '');
+    // Remove trailing slashes
+    cleanEndpoint = cleanEndpoint.replace(/\/$/, '');
+    return cleanEndpoint;
   };
 
   const handleSendMessage = async (e) => {
@@ -50,68 +62,208 @@ export function ChatView({ apiKey, endpoint, model, apiVersion = '2024-02-15-pre
     if (!inputMessage.trim() && !fileContent) return;
     if (!validateSettings()) return;
 
-    let visibleContent = inputMessage;
-    if (fileContent && uploadedFile) {
-      visibleContent = inputMessage ? `${inputMessage}\n\nAnalyzing file: ${uploadedFile.name}` : `Analyzing file: ${uploadedFile.name}`;
-    }
-
-    const userMessage = {
+    // Create the visible message for the chat
+    const displayMessage = {
       role: 'user',
-      content: fileContent ? `${visibleContent}\n\nFile contents:\n${fileContent}` : visibleContent
+      content: inputMessage.trim() || (uploadedFile ? `Analyzing file: ${uploadedFile.name}` : '')
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    // Create the full message for the API that includes the file content
+    const apiMessage = {
+      role: 'user',
+      content: displayMessage.content + (fileContent ? `\n\nFile contents:\n${fileContent}` : '')
+    };
+
+    // Add only the display message to the chat
+    setMessages(prev => [...prev, displayMessage]);
     setInputMessage('');
     setFileContent(null);
     setUploadedFile(null);
     setIsLoading(true);
 
-    try {      const baseEndpoint = getCleanEndpoint();
-      const response = await fetch(`${baseEndpoint}/openai/deployments/${model}/chat/completions?api-version=${apiVersion}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': apiKey,
-        },
-        body: JSON.stringify({          messages: [
-            {
-              role: 'system',
-              content: `You are a helpful AI assistant. ${customPrompt}
+    let retryCount = 0;
+    const maxRetries = 3;
+    const retryDelay = 2000; // 2 seconds
 
-Format your responses in this structure:
-<p>[Your response here]</p>
-<hr/>`
-            },
-            ...messages,
-            userMessage
-          ],
-          max_completion_tokens: 800
-        }),
-      });
+    while (retryCount < maxRetries) {
+      try {
+        const baseEndpoint = getCleanEndpoint();
+        const apiUrl = `${baseEndpoint}/openai/deployments/${model}/chat/completions`;
+        
+        const response = await fetch(`${apiUrl}?api-version=${apiVersion}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'api-key': apiKey,
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: 'system',
+                content: `You are a helpful AI assistant. ${customPrompt}
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error?.message || `HTTP error! status: ${response.status}`);
+Format your responses using clean, simple HTML structure:
+<p>
+[Your response here]
+</p>
+
+Note: Focus on answering questions directly without mentioning training details or cutoff dates.`
+              },
+              ...messages.map(msg => ({
+                role: msg.role,
+                content: msg.content
+              })),
+              apiMessage // Use the API message that includes file content
+            ],
+            temperature: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+            max_completion_tokens: 800
+          }),
+        });
+
+        if (response.status === 503) {
+          console.log(`Attempt ${retryCount + 1}: Service unavailable, retrying...`);
+          retryCount++;
+          if (retryCount === maxRetries) {
+            throw new Error('Service is temporarily unavailable. Please try again later.');
+          }
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          continue;
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          const errorMessage = errorData?.error?.message || `HTTP error! status: ${response.status}`;
+          console.error('API Error:', errorData);
+          throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        if (!data.choices?.[0]?.message) {
+          throw new Error('Invalid response format from API');
+        }
+
+        const assistantMessage = {
+          role: 'assistant',
+          content: data.choices[0].message.content
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
+        break; // Success, exit the retry loop
+
+      } catch (error) {
+        console.error(`Attempt ${retryCount + 1} failed:`, error);
+        if (retryCount === maxRetries - 1) {
+          setError(error.message || 'An error occurred while connecting to Azure OpenAI. Please try again later.');
+          setFailedMessageIndex(messages.length);
+          break;
+        }
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
       }
-
-      const data = await response.json();
-      if (!data.choices?.[0]?.message) {
-        throw new Error('Invalid response format from API');
-      }
-
-      const assistantMessage = {
-        role: 'assistant',
-        content: data.choices[0].message.content
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error('Error:', error);
-      setError(error.message || 'An error occurred while connecting to Azure OpenAI. Please check your settings and try again.');
-      setFailedMessageIndex(messages.length);
-    } finally {
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
+  };
+
+  const handleRetry = async (index) => {
+    setError(null);
+    setFailedMessageIndex(null);
+    setIsLoading(true);
+
+    // Get the failed message
+    const failedMessage = messages[index];
+    if (!failedMessage) {
+      setError('Could not find the message to retry');
+      setIsLoading(false);
+      return;
+    }
+
+    // Remove all messages after the failed one
+    setMessages(prev => prev.slice(0, index));
+
+    let retryCount = 0;
+    const maxRetries = 3;
+    const retryDelay = 2000;
+
+    while (retryCount < maxRetries) {
+      try {
+        const baseEndpoint = getCleanEndpoint();
+        const apiUrl = `${baseEndpoint}/openai/deployments/${model}/chat/completions`;
+        
+        const response = await fetch(`${apiUrl}?api-version=${apiVersion}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'api-key': apiKey,
+          },
+          body: JSON.stringify({
+            messages: [
+              {
+                role: 'system',
+                content: `You are a helpful AI assistant. ${customPrompt}
+
+Format your responses using clean, simple HTML structure:
+<p>
+[Your response here]
+</p>
+
+Note: Focus on answering questions directly without mentioning training details or cutoff dates.`
+              },
+              ...messages.slice(0, index),
+              failedMessage
+            ],
+            temperature: 1,
+            frequency_penalty: 0,
+            presence_penalty: 0,
+            max_completion_tokens: 800
+          }),
+        });
+
+        if (response.status === 503) {
+          console.log(`Retry attempt ${retryCount + 1}: Service unavailable, retrying...`);
+          retryCount++;
+          if (retryCount === maxRetries) {
+            throw new Error('Service is temporarily unavailable. Please try again later.');
+          }
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          continue;
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          const errorMessage = errorData?.error?.message || `HTTP error! status: ${response.status}`;
+          console.error('API Error:', errorData);
+          throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        if (!data.choices?.[0]?.message) {
+          throw new Error('Invalid response format from API');
+        }
+
+        const assistantMessage = {
+          role: 'assistant',
+          content: data.choices[0].message.content
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
+        break; // Success, exit the retry loop
+
+      } catch (error) {
+        console.error(`Retry attempt ${retryCount + 1} failed:`, error);
+        if (retryCount === maxRetries - 1) {
+          setError(error.message || 'An error occurred while connecting to Azure OpenAI. Please try again later.');
+          setFailedMessageIndex(index);
+          break;
+        }
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      }
+    }
+
+    setIsLoading(false);
   };
 
   const handleFileUpload = (e) => {
