@@ -5,95 +5,95 @@ export function ApiSettingsForm({
   handleClearSettings,
   handleClearAllSettings
 }) {
-  // Add default values if the settings for the current tab don't exist
   const currentSettings = apiSettings[activeSettingsTab] || {
     apiKey: '',
     endpoint: '',
     model: '',
-    apiVersion: '2024-12-01-preview'
+    apiVersion: '2024-02-15-preview'
   };
 
-  // Custom labels and placeholders based on the active tab
-  const getFieldProps = (field) => {
-    if (activeSettingsTab === 'Avatar') {
-      switch (field) {
-        case 'apiKey':
-          return {
-            label: 'Azure OpenAI API Key:',
-            placeholder: 'Enter Azure OpenAI API Key'
-          };
-        case 'endpoint':
-          return {
-            label: 'Azure OpenAI Endpoint:',
-            placeholder: 'e.g., https://{your-resource-name}.openai.azure.com'
-          };
-        case 'model':
-          return {
-            label: 'Image Generation Model:',
-            placeholder: 'Enter DALL-E 3 deployment name'
-          };
-        case 'apiVersion':
-          return {
-            label: 'API Version:',
-            placeholder: 'e.g., 2024-12-01-preview'
-          };
-      }
+  const endpointPlaceholder = activeSettingsTab === 'Image Generation'
+    ? "Enter your complete Azure OpenAI endpoint URL for DALL-E"
+    : "Enter your Azure OpenAI endpoint URL";
+
+  const handleEndpointChange = (e) => {
+    let value = e.target.value;
+    // For Chat, clean up the endpoint URL by removing the /openai/responses part
+    if (activeSettingsTab === 'Chat') {
+      value = value.replace(/\/openai\/responses.*$/, '');
+      value = value.replace(/\/openai\/deployments.*$/, '');
+      value = value.replace(/\/$/, '');
     }
-    
-    // Default labels for other tabs
-    return {
-      apiKey: { label: 'API Key:', placeholder: 'Enter API Key' },
-      endpoint: { label: 'Endpoint:', placeholder: 'Enter Endpoint' },
-      model: { label: 'Model:', placeholder: 'Enter Model' },
-      apiVersion: { label: 'API Version:', placeholder: 'Enter API Version' }
-    }[field];
+    handleApiSettingChange(activeSettingsTab, 'endpoint', value);
   };
 
   return (
     <>
       <form className="api-form">
         <label>
-          {getFieldProps('apiKey').label}
+          API Key:
           <input 
             type="password" 
-            placeholder={getFieldProps('apiKey').placeholder}
+            placeholder="Enter your Azure OpenAI API Key"
             value={currentSettings.apiKey}
             onChange={(e) => handleApiSettingChange(activeSettingsTab, 'apiKey', e.target.value)}
           />
         </label>
         <label>
-          {getFieldProps('endpoint').label}
+          {activeSettingsTab === 'Image Generation' ? 'Full Endpoint URL:' : 'Endpoint URL:'}
           <input 
             type="text" 
-            placeholder={getFieldProps('endpoint').placeholder}
+            placeholder={endpointPlaceholder}
             value={currentSettings.endpoint}
-            onChange={(e) => handleApiSettingChange(activeSettingsTab, 'endpoint', e.target.value)}
+            onChange={handleEndpointChange}
           />
         </label>
-        <label>
-          {getFieldProps('model').label}
-          <input 
-            type="text" 
-            placeholder={getFieldProps('model').placeholder}
-            value={currentSettings.model}
-            onChange={(e) => handleApiSettingChange(activeSettingsTab, 'model', e.target.value)}
-          />
-        </label>
-        <label>
-          {getFieldProps('apiVersion').label}
-          <input 
-            type="text" 
-            placeholder={getFieldProps('apiVersion').placeholder}
-            value={currentSettings.apiVersion}
-            onChange={(e) => handleApiSettingChange(activeSettingsTab, 'apiVersion', e.target.value)}
-          />
-        </label>
+
+        {activeSettingsTab === 'Chat' && (
+          <>
+            <label>
+              Model Deployment Name:
+              <input 
+                type="text" 
+                placeholder="Enter your model deployment name (e.g., gpt-4)"
+                value={currentSettings.model}
+                onChange={(e) => handleApiSettingChange(activeSettingsTab, 'model', e.target.value)}
+              />
+            </label>
+            <label>
+              API Version:
+              <input 
+                type="text" 
+                placeholder="Enter API version (e.g., 2024-02-15-preview)"
+                value={currentSettings.apiVersion}
+                onChange={(e) => handleApiSettingChange(activeSettingsTab, 'apiVersion', e.target.value)}
+              />
+            </label>
+            <div className="api-form-info">
+              <p>
+                For Chat, enter the following:
+              </p>
+              <p>
+                Endpoint example: https://YOUR-RESOURCE.openai.azure.com
+              </p>
+              <p>
+                Model deployment name: The name you gave to your deployed model in Azure
+              </p>
+              <p>
+                API Version: The Azure OpenAI API version (default: 2024-02-15-preview)
+              </p>
+            </div>
+          </>
+        )}
         
-        {activeSettingsTab === 'Avatar' && (
+        {activeSettingsTab === 'Image Generation' && (
           <div className="api-form-info">
             <p>
-              This avatar generator uses Azure OpenAI's DALL-E models to create profile images based on your description.
-              You'll need an Azure OpenAI deployment with image generation capabilities.
+              For DALL-E 3, your complete endpoint URL should include your model deployment name and API version, like this:
+              https://YOUR-RESOURCE.openai.azure.com/openai/deployments/YOUR-DALLE3-DEPLOYMENT/images/generations?api-version=2024-02-01
+            </p>
+            <p>
+              No need to enter the model separately - it's part of the endpoint URL (see 'YOUR-DALLE3-DEPLOYMENT' in the example above).
             </p>
           </div>
         )}

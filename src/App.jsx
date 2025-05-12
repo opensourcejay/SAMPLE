@@ -25,39 +25,29 @@ function App() {
     { name: "Voice", icon: "🎙️" },
     { name: "Search", icon: "🔍" }
   ];
-  
-  const [apiSettings, setApiSettings] = useState(() => {
+    const [apiSettings, setApiSettings] = useState(() => {
     const savedSettings = localStorage.getItem('apiSettings');
-    return savedSettings ? JSON.parse(savedSettings) : {
-      'Chat': {
+    return savedSettings ? JSON.parse(savedSettings) : {      'Chat': {
         apiKey: '',
         endpoint: '',
         model: '',
-        apiVersion: '2024-12-01-preview'
+        apiVersion: '2024-02-15-preview'
       },
       'Image Generation': {
         apiKey: '',
-        endpoint: '',
-        model: '',
-        apiVersion: '2024-12-01-preview'
+        endpoint: ''
       },
       'Avatar': {
         apiKey: '',
-        endpoint: '',
-        model: '',
-        apiVersion: '2024-12-01-preview' // Standard Azure OpenAI API version
+        endpoint: ''
       },
       'Voice': {
         apiKey: '',
-        endpoint: '',
-        model: '',
-        apiVersion: '2024-12-01-preview'
+        endpoint: ''
       },
       'Search': {
         apiKey: '',
-        endpoint: '',
-        model: '',
-        apiVersion: '2024-12-01-preview'
+        endpoint: ''
       }
     };
   });
@@ -79,28 +69,24 @@ function App() {
         [setting]: value
       }
     }));
-  };
-
-  const handleClearSettings = (section) => {
+  };  const handleClearSettings = (section) => {
     setApiSettings(prev => ({
       ...prev,
       [section]: {
         apiKey: '',
         endpoint: '',
-        model: '',
-        apiVersion: section === 'Avatar' ? '2024-12-01-preview' : '2024-12-01-preview'
+        model: section === 'Chat' ? '' : undefined,
+        apiVersion: section === 'Chat' ? '2024-02-15-preview' : undefined
       }
     }));
-  };
-
-  const handleClearAllSettings = () => {
+  };  const handleClearAllSettings = () => {
     const clearedSettings = Object.keys(apiSettings).reduce((acc, section) => ({
       ...acc,
       [section]: {
         apiKey: '',
         endpoint: '',
-        model: '',
-        apiVersion: section === 'Avatar' ? '2024-12-01-preview' : '2024-12-01-preview'
+        model: section === 'Chat' ? '' : undefined,
+        apiVersion: section === 'Chat' ? '2024-02-15-preview' : undefined
       }
     }), {});
     setApiSettings(clearedSettings);
@@ -109,65 +95,51 @@ function App() {
   const renderContent = () => {
     const currentSettings = apiSettings[activeSection] || {
       apiKey: '',
-      endpoint: '',
-      model: '',
-      apiVersion: '2024-12-01-preview'
+      endpoint: ''
     };
 
-    switch(activeSection) {
-      case 'Chat':
+    switch(activeSection) {      case 'Chat':
         return (
           <ChatView 
             apiKey={currentSettings.apiKey} 
-            endpoint={currentSettings.endpoint} 
-            model={currentSettings.model} 
+            endpoint={currentSettings.endpoint}
+            model={currentSettings.model}
             apiVersion={currentSettings.apiVersion}
-            onSectionChange={setActiveSection}
           />
         );
       case 'Image Generation':
         return (
           <ImageGenerationView 
             apiKey={currentSettings.apiKey} 
-            endpoint={currentSettings.endpoint} 
-            model={currentSettings.model} 
-            apiVersion={currentSettings.apiVersion}
+            endpoint={currentSettings.endpoint}
           />
         );
       case 'Avatar':
         return (
           <AvatarView 
             apiKey={currentSettings.apiKey} 
-            endpoint={currentSettings.endpoint} 
-            model={currentSettings.model} 
-            apiVersion={currentSettings.apiVersion}
+            endpoint={currentSettings.endpoint}
           />
         );
       case 'Voice':
         return (
           <VoiceView 
             apiKey={currentSettings.apiKey} 
-            endpoint={currentSettings.endpoint} 
-            model={currentSettings.model} 
-            apiVersion={currentSettings.apiVersion}
+            endpoint={currentSettings.endpoint}
           />
         );
       case 'Search':
         return (
           <SearchView 
             apiKey={currentSettings.apiKey} 
-            endpoint={currentSettings.endpoint} 
-            model={currentSettings.model} 
-            apiVersion={currentSettings.apiVersion}
+            endpoint={currentSettings.endpoint}
           />
-        );
-      default:
+        );        default:
         return <ChatView 
           apiKey={currentSettings.apiKey} 
-          endpoint={currentSettings.endpoint} 
-          model={currentSettings.model} 
+          endpoint={currentSettings.endpoint}
+          model={currentSettings.model}
           apiVersion={currentSettings.apiVersion}
-          onSectionChange={setActiveSection}
         />;
     }
   };

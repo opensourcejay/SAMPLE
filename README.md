@@ -55,6 +55,24 @@ A React-based application that demonstrates various Azure OpenAI capabilities in
 
 Settings are saved automatically and persisted in your browser's local storage.
 
+### Chat Configuration
+Required settings for the Chat feature:
+```
+API Key: your-azure-openai-api-key
+Endpoint URL: https://your-resource.openai.azure.com
+Model Deployment Name: your-model-deployment-name
+API Version: 2024-02-15-preview (or your specific version)
+```
+Note: For Chat, enter the base endpoint URL without any '/openai/responses' or model-specific paths.
+
+### Image Generation Configuration
+Required settings for the Image Generation feature:
+```
+API Key: your-azure-openai-api-key
+Full Endpoint URL: https://your-resource.openai.azure.com/openai/deployments/your-dalle3-deployment/images/generations?api-version=2024-02-01
+```
+Note: For Image Generation, the complete endpoint URL must include the model deployment name and API version.
+
 ## Project Structure
 
 ```

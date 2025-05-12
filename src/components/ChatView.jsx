@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export function ChatView({ apiKey, endpoint, model, apiVersion, onSectionChange }) {
+export function ChatView({ apiKey, endpoint, model, apiVersion = '2024-02-15-preview' }) {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,7 +25,9 @@ export function ChatView({ apiKey, endpoint, model, apiVersion, onSectionChange 
       setError('Please enter your API key in settings');
       return false;
     }
-    if (!endpoint?.trim()) {
+    // Clean up endpoint URL
+    const cleanEndpoint = endpoint?.trim()?.replace(/\/openai\/.*$/, '')?.replace(/\/$/, '');
+    if (!cleanEndpoint) {
       setError('Please enter your Azure OpenAI endpoint in settings');
       return false;
     }
@@ -36,71 +38,8 @@ export function ChatView({ apiKey, endpoint, model, apiVersion, onSectionChange 
     return true;
   };
 
-  const handleSavePrompt = () => {
-    if (editingPrompt.trim()) {
-      setCustomPrompt(editingPrompt.trim());
-      setShowPromptEditor(false);
-    }
-  };
-
-  const handleRetry = async (messageIndex) => {
-    const messageToRetry = messages[messageIndex];
-    setMessages(prev => prev.slice(0, messageIndex));
-    setError(null);
-    setIsLoading(true);
-    setFailedMessageIndex(null);
-
-    try {
-      const baseEndpoint = endpoint.replace(/\/$/, '');
-      const response = await fetch(`${baseEndpoint}/openai/deployments/${model}/chat/completions?api-version=${apiVersion}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'api-key': apiKey,
-        },
-        body: JSON.stringify({
-          messages: [
-            { 
-              role: 'system', 
-              content: `You are a helpful AI assistant. ${customPrompt}
-
-Format your responses in this structure:
-<p>[Your response here]</p>
-<hr/>`
-            },
-            ...messages.slice(0, messageIndex).map(m => ({
-              role: m.role,
-              content: m.content
-            })),
-            messageToRetry
-          ],
-          max_completion_tokens: 800
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error?.message || `HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (!data.choices?.[0]?.message) {
-        throw new Error('Invalid response format from API');
-      }
-
-      const assistantMessage = { 
-        role: 'assistant', 
-        content: data.choices[0].message.content 
-      };
-      
-      setMessages(prev => [...prev, messageToRetry, assistantMessage]);
-    } catch (error) {
-      console.error('Error:', error);
-      setError(error.message || 'An error occurred while connecting to Azure OpenAI. Please check your settings and try again.');
-      setFailedMessageIndex(messageIndex);
-    } finally {
-      setIsLoading(false);
-    }
+  const getCleanEndpoint = () => {
+    return endpoint?.trim()?.replace(/\/openai\/.*$/, '')?.replace(/\/$/, '');
   };
 
   const handleSendMessage = async (e) => {
@@ -116,45 +55,35 @@ Format your responses in this structure:
       visibleContent = inputMessage ? `${inputMessage}\n\nAnalyzing file: ${uploadedFile.name}` : `Analyzing file: ${uploadedFile.name}`;
     }
 
-    const currentMessageIndex = messages.length;
-    const visibleMessage = {
-      role: 'user',
-      content: visibleContent
-    };
-    const apiMessage = {
+    const userMessage = {
       role: 'user',
       content: fileContent ? `${visibleContent}\n\nFile contents:\n${fileContent}` : visibleContent
     };
 
-    setMessages(prev => [...prev, visibleMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setFileContent(null);
     setUploadedFile(null);
     setIsLoading(true);
 
-    try {
-      const baseEndpoint = endpoint.replace(/\/$/, '');
+    try {      const baseEndpoint = getCleanEndpoint();
       const response = await fetch(`${baseEndpoint}/openai/deployments/${model}/chat/completions?api-version=${apiVersion}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'api-key': apiKey,
         },
-        body: JSON.stringify({
-          messages: [
-            { 
-              role: 'system', 
+        body: JSON.stringify({          messages: [
+            {
+              role: 'system',
               content: `You are a helpful AI assistant. ${customPrompt}
 
 Format your responses in this structure:
 <p>[Your response here]</p>
 <hr/>`
             },
-            ...messages.map(m => ({
-              role: m.role,
-              content: m.content
-            })),
-            apiMessage
+            ...messages,
+            userMessage
           ],
           max_completion_tokens: 800
         }),
@@ -170,16 +99,16 @@ Format your responses in this structure:
         throw new Error('Invalid response format from API');
       }
 
-      const assistantMessage = { 
-        role: 'assistant', 
-        content: data.choices[0].message.content 
+      const assistantMessage = {
+        role: 'assistant',
+        content: data.choices[0].message.content
       };
-      
+
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Error:', error);
       setError(error.message || 'An error occurred while connecting to Azure OpenAI. Please check your settings and try again.');
-      setFailedMessageIndex(currentMessageIndex);
+      setFailedMessageIndex(messages.length);
     } finally {
       setIsLoading(false);
     }
