@@ -3,7 +3,7 @@ export function WorkInProgress({ feature }) {
     <div className="work-in-progress-container">
       <div className="work-in-progress">
         <div className="wip-content">
-          <h3>{feature} Coming Soon!</h3>
+          <h3>{feature}</h3>
           <p>This feature is currently under development.</p>
           <p>Stay tuned for updates!</p>
         </div>

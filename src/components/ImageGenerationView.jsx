@@ -164,10 +164,19 @@ export function ImageGenerationView({ apiKey, endpoint }) {
             </div>
           </div>
         </form>
-      </div>
-
-      <div className="image-history-sidebar">
-        <h3>Generation History</h3>
+      </div>      <div className="image-history-sidebar">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3>Generation History</h3>
+          {generationHistory.length > 0 && (
+            <button 
+              onClick={() => setGenerationHistory([])} 
+              className="clear-button"
+              title="Clear all history"
+            >
+              Clear All
+            </button>
+          )}
+        </div>
         <div className="image-history-list">
           {generationHistory.map((image) => (
             <div key={image.id} className="history-item">

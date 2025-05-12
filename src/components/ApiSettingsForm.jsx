@@ -55,7 +55,7 @@ export function ApiSettingsForm({
               Model Deployment Name:
               <input 
                 type="text" 
-                placeholder="Enter your model deployment name (e.g., gpt-4)"
+                placeholder="Enter your model deployment name"
                 value={currentSettings.model}
                 onChange={(e) => handleApiSettingChange(activeSettingsTab, 'model', e.target.value)}
               />
@@ -64,37 +64,19 @@ export function ApiSettingsForm({
               API Version:
               <input 
                 type="text" 
-                placeholder="Enter API version (e.g., 2024-02-15-preview)"
+                placeholder="Enter API version"
                 value={currentSettings.apiVersion}
                 onChange={(e) => handleApiSettingChange(activeSettingsTab, 'apiVersion', e.target.value)}
               />
             </label>
             <div className="api-form-info">
-              <p>
-                For Chat, enter the following:
-              </p>
-              <p>
-                Endpoint example: https://YOUR-RESOURCE.openai.azure.com
-              </p>
-              <p>
-                Model deployment name: The name you gave to your deployed model in Azure
-              </p>
-              <p>
-                API Version: The Azure OpenAI API version (default: 2024-02-15-preview)
-              </p>
+              <p>Configure your Azure OpenAI service settings for Chat.</p>
             </div>
           </>
         )}
-        
         {activeSettingsTab === 'Image Generation' && (
           <div className="api-form-info">
-            <p>
-              For DALL-E 3, your complete endpoint URL should include your model deployment name and API version, like this:
-              https://YOUR-RESOURCE.openai.azure.com/openai/deployments/YOUR-DALLE3-DEPLOYMENT/images/generations?api-version=2024-02-01
-            </p>
-            <p>
-              No need to enter the model separately - it's part of the endpoint URL (see 'YOUR-DALLE3-DEPLOYMENT' in the example above).
-            </p>
+            <p>Configure your Azure OpenAI DALL-E 3 service settings.</p>
           </div>
         )}
       </form>
